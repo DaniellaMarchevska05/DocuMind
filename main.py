@@ -1,6 +1,8 @@
 import os
 
+
 from dotenv import load_dotenv
+from deep_translator import GoogleTranslator
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.vectorstores import Chroma
@@ -10,6 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
+
 from langchain_groq import ChatGroq
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
@@ -86,7 +89,7 @@ db = Chroma(persist_directory=persistent_directory, embedding_function=embedding
 # `search_kwargs` contains additional arguments for the search (e.g., number of results to return)
 retriever = db.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 30},
+    search_kwargs={"k": 40},
 )
 
 # query = "pseudoinstructions"
@@ -181,18 +184,25 @@ question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 # Create a retrieval chain that combines the history-aware retriever and the question answering chain
 rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
+def translate_to_english(text):
+    return GoogleTranslator(source="uk", target="en").translate(text)
+
+def translate_to_ukrainian(text):
+    return GoogleTranslator(source="en", target="uk").translate(text)
 
 # Function to simulate a continual chat
 def continual_chat():
     print("Start chatting with the AI! Type 'exit' to end the conversation.")
     chat_history = []  # Collect chat history here (a sequence of messages)
     while True:
-        query = input("You: ")
+        query = input("Ви: ")
         if query.lower() == "exit":
             break
 
+        translated_query = translate_to_english(query)
+
         # Retrieve relevant documents
-        retrieved_docs = history_aware_retriever.invoke({"input": query, "chat_history": chat_history})
+        retrieved_docs = history_aware_retriever.invoke({"input": translated_query, "chat_history": chat_history})
 
         # If no relevant documents are found, say "I don't know."
         if not retrieved_docs:
@@ -205,13 +215,13 @@ def continual_chat():
             print(f"Chunk {i + 1}: {doc.page_content}\n{'-' * 50}")
 
         # Process the query using the RAG chain
-        result = rag_chain.invoke({"input": query, "chat_history": chat_history})
+        result = rag_chain.invoke({"input": translated_query, "chat_history": chat_history})
 
-        # Display the AI's response
-        print(f"\nAI: {result['answer']}")
+        response = translate_to_ukrainian(result["answer"])
+        print(f"\nAI: {response}")
 
         # Update chat history
-        chat_history.append(HumanMessage(content=query))
+        chat_history.append(HumanMessage(content=translated_query))
         chat_history.append(SystemMessage(content=result["answer"]))
 
 
