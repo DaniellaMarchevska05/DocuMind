@@ -11,7 +11,7 @@ DocuMind is an AI-driven study assistant designed to support students by leverag
 - **Chat History Awareness:** Reformulates questions based on previous interactions for accurate and consistent answers.  
 - **Efficient Information Retrieval:** Utilizes ChromaDB for quick, seamless document indexing and retrieval.  
 - **Multiple AI Models Support:** Uses OpenAI, Groq, and Hugging Face embeddings for optimal AI performance.  
-- **Persistent Storage:** Maintains document processing across sessions using a persistent vector store.  
+- **Persistent Storage:** Maintains document processing across sessions using a persistent vector store 
 
 ## 🔧 Installation  
 1. **Clone the repository:**  
